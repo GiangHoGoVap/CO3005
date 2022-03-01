@@ -1,1 +1,1 @@
-# CO3005
+# CO3005 - Principles of Programming Languages
