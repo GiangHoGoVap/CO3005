@@ -53,16 +53,11 @@ varstmt_list: COMMA ID varstmt_list expr COMMA
 
 assignstmt: assign_body SEMI;
 assign_body: assign_lhs ASSIGN expr;
-assign_lhs: element_expr | scalar_var;
+assign_lhs: element_expr | scalar_var | LB (scalar_var | element_expr) RB;
 
-// ifstmt: If LB expr RB LP blockstmt RP elseif_part* else_part?;
-// elseif_part: Elseif LB expr RB blockstmt;
-// else_part: Else blockstmt;
-
-// ifstmt: If LB expr RB LP blockstmt RP (Elseif LB expr RB LP blockstmt RP)* (Else LP blockstmt RP)?;
 ifstmt: If LB expr RB blockstate (Elseif LB expr RB blockstate)* (Else blockstate)?;
 
-foreachstmt: Foreach LB scalar_var In expr DOUBLEDOT expr (By expr)? RB LP blockstmt RP;
+foreachstmt: Foreach LB scalar_var In expr DOUBLEDOT expr (By expr)? RB blockstate;
 breakstmt: Break SEMI;
 continuestmt: Continue SEMI;
 returnstmt: Return expr? SEMI;
@@ -71,8 +66,8 @@ scalar_var: scalar_helper INSTANTAC ID
 		  | ID STATICAC DollaID
 		  | ID;
 
-scalar_helper: scalar_helper INSTANTAC ID arg?
-			 | invocast_helper
+scalar_helper: scalar_helper INSTANTAC ID
+			 | ID STATICAC DollaID
 			 | Self
 			 | ID;
 
@@ -154,7 +149,7 @@ expr3: expr3 (ADDITION | SUBTRACTION) expr4 | expr4;
 expr4: expr4 (MULTIPLICATION | DIVISION | MODULO) expr5 | expr5;
 expr5: LOGICALNOT expr5 | expr6;
 expr6: SUBTRACTION expr6 | expr7;
-expr7: expr7 LS expr7 RS | expr8;
+expr7: expr7 LS expr RS | expr8;
 expr8: expr8 INSTANTAC ID arg? | expr9;
 expr9: ID STATICAC DollaID arg? | expr10;
 expr10: New ID arg | expr11;

@@ -260,7 +260,10 @@ class ParserSuite(unittest.TestCase):
     def test_var_decl_stmt1(self):
         input = """Class Program {
             main() {
-                Val num: Array[Int, 1];
+                {
+                    Val num: Array[Int, 1];
+                    Var num1: Array[Float, 2] = Array(1.5, 2.5);
+                }
             }
         }"""
         expect = "successful"
@@ -532,7 +535,7 @@ class ParserSuite(unittest.TestCase):
     def test_assign_stmt3(self):
         input = """Class Program {
             main() {
-                a::$b.c(e).f = a::$b.c() - a.b().c;
+                a::$b.c.d = a::$b.c() - a.b().c;
             }
         }"""
         expect = "successful"
@@ -872,7 +875,7 @@ class ParserSuite(unittest.TestCase):
     def test_scalar_var5(self):
         input = """Class Program {
             main() {
-                Foreach (Self.func().b._val In 1 .. 10 By 3) {
+                Foreach (Self.func.b._val In 1 .. 10 By 3) {
                     Out.println("abc");
                 }
             }
@@ -916,7 +919,7 @@ class ParserSuite(unittest.TestCase):
     def test_scalar_var9(self):
         input = """Class Program {
             main() {
-                Foreach (a::$func().b._val In 1 .. 10) {
+                Foreach (a::$func.b._val In 1 .. 10) {
                     Out.println("abc");
                 }
             }
@@ -927,7 +930,7 @@ class ParserSuite(unittest.TestCase):
     def test_scalar_var10(self):
         input = """Class Program {
             main() {
-                Foreach (Program::$a(_1)._val In 1 .. 10) {
+                Foreach (Program::$a._val In 1 .. 10) {
                     Out.printLn("abc");
                 }
             }

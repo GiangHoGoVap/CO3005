@@ -299,7 +299,7 @@ class ASTGeneration(D96Visitor):
         rhs = self.visit(ctx.expr())
         return Assign(lhs, rhs)
 
-    # assign_lhs: element_expr | scalar_var;
+    # assign_lhs: element_expr | scalar_var | LB (scalar_var | element_expr) RB;
     def visitAssign_lhs(self, ctx: D96Parser.Assign_lhsContext):
         if ctx.element_expr():
             return self.visit(ctx.element_expr())
@@ -344,7 +344,7 @@ class ASTGeneration(D96Visitor):
         else_block = else_stmt
         return If(if_expr, if_stmt, else_block)
 
-    # foreachstmt: Foreach LB scalar_var In expr DOUBLEDOT expr (By expr)? RB LP blockstmt RP;
+    # foreachstmt: Foreach LB scalar_var In expr DOUBLEDOT expr (By expr)? RB blockstate;
     def visitForeachstmt(self, ctx: D96Parser.ForeachstmtContext):
         id = self.visit(ctx.scalar_var())
         expr1 = self.visit(ctx.expr(0))
@@ -352,7 +352,7 @@ class ASTGeneration(D96Visitor):
         expr3 = IntLiteral(1)
         if ctx.By():
             expr3 = self.visit(ctx.expr(2))
-        loop = self.visit(ctx.blockstmt())
+        loop = self.visit(ctx.blockstate())
         return For(id, expr1, expr2, loop, expr3)
 
     # breakstmt: Break SEMI;
@@ -384,24 +384,22 @@ class ASTGeneration(D96Visitor):
             return FieldAccess(obj, method)
         return Id(ctx.ID().getText())
 
-    # scalar_helper: scalar_helper INSTANTAC ID arg?
-    # 			   | invocast_helper
+    # scalar_helper: scalar_helper INSTANTAC ID 
+    # 			   | ID STATICAC DollaID
     # 			   | Self
     # 			   | ID;
     def visitScalar_helper(self, ctx: D96Parser.Scalar_helperContext):
         if ctx.INSTANTAC():
             obj = self.visit(ctx.scalar_helper())
             method = Id(ctx.ID().getText())
-            if ctx.arg():
-                param = self.visit(ctx.arg())
-                return CallExpr(obj, method, param)
-            else:
-                return FieldAccess(obj, method)
+            return FieldAccess(obj, method)
+        elif ctx.STATICAC():
+            obj = Id(ctx.ID().getText())
+            method = Id(ctx.DollaID().getText())
+            return FieldAccess(obj, method)
         elif ctx.Self():
             return SelfLiteral()
-        elif ctx.ID():
-            return Id(ctx.ID().getText())
-        return self.visit(ctx.invocast_helper())
+        return Id(ctx.ID().getText())
 
     # instance_helper: New ID arg
     # 			     | instance_helper INSTANTAC ID arg?
@@ -621,16 +619,17 @@ class ASTGeneration(D96Visitor):
         body = self.visit(ctx.expr6())
         return UnaryOp(op, body)
 
-    # expr7: expr7 LS expr7 RS | expr8;
+    # expr7: expr7 LS expr RS | expr8;
     def visitExpr7(self, ctx: D96Parser.Expr7Context):
         if ctx.getChildCount() == 1:
             return self.visit(ctx.expr8())
         indexlist = []
-        indexlist += [self.visit(ctx.expr7(1))]
-        ctx = ctx.expr7(0)
+        indexlist += [self.visit(ctx.expr())]
+        ctx = ctx.expr7()
         while ctx.LS():
-            indexlist += [self.visit(ctx.expr7(1))]
-            ctx = ctx.expr7(0)
+            # indexlist += [self.visit(ctx.expr7(1))]
+            indexlist += [self.visit(ctx.expr())]
+            ctx = ctx.expr7()
         arr = self.visit(ctx)
         indexlist = indexlist[::-1]
         return ArrayCell(arr, indexlist)
