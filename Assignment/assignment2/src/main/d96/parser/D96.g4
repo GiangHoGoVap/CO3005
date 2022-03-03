@@ -66,8 +66,9 @@ scalar_var: scalar_helper INSTANTAC ID
 		  | ID STATICAC DollaID
 		  | ID;
 
-scalar_helper: scalar_helper INSTANTAC ID
-			 | ID STATICAC DollaID
+scalar_helper: scalar_helper INSTANTAC ID arg?
+			 | ID STATICAC DollaID arg?
+			 | LB expr RB
 			 | Self
 			 | ID;
 
@@ -138,7 +139,7 @@ multi_arrlit: Array LB index_arrlit+ RB;
 
 operands: literal | Self | Null | ID;
 
-element_expr: scalar_var index_operators;
+element_expr: (scalar_var | expr) index_operators;
 index_operators: (LS expr RS)+;
 
 /* Expressions */

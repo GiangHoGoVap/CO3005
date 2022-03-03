@@ -384,19 +384,28 @@ class ASTGeneration(D96Visitor):
             return FieldAccess(obj, method)
         return Id(ctx.ID().getText())
 
-    # scalar_helper: scalar_helper INSTANTAC ID 
-    # 			   | ID STATICAC DollaID
+    # scalar_helper: scalar_helper INSTANTAC ID arg?
+    # 			   | ID STATICAC DollaID arg?
+    #              | LB expr RB
     # 			   | Self
     # 			   | ID;
     def visitScalar_helper(self, ctx: D96Parser.Scalar_helperContext):
         if ctx.INSTANTAC():
             obj = self.visit(ctx.scalar_helper())
             method = Id(ctx.ID().getText())
+            if ctx.arg():
+                param = self.visit(ctx.arg())
+                return CallExpr(obj, method, param)
             return FieldAccess(obj, method)
         elif ctx.STATICAC():
             obj = Id(ctx.ID().getText())
             method = Id(ctx.DollaID().getText())
+            if ctx.arg():
+                param = self.visit(ctx.arg())
+                return CallExpr(obj, method, param)
             return FieldAccess(obj, method)
+        elif ctx.LB():
+            return self.visit(ctx.expr())
         elif ctx.Self():
             return SelfLiteral()
         return Id(ctx.ID().getText())
@@ -544,10 +553,13 @@ class ASTGeneration(D96Visitor):
             return Id(ctx.ID().getText())
         return self.visit(ctx.literal())
 
-    # element_expr: scalar_var index_operators;
+    # element_expr: (scalar_var | expr) index_operators;
     # a[1][2] -> ArrayCell(a, [1, 2])
     def visitElement_expr(self, ctx: D96Parser.Element_exprContext):
-        arr = self.visit(ctx.scalar_var())
+        if ctx.scalar_var():
+            arr = self.visit(ctx.scalar_var())
+        else:
+            arr = self.visit(ctx.expr())
         idx = self.visit(ctx.index_operators())
         return ArrayCell(arr, idx)
 
@@ -627,7 +639,6 @@ class ASTGeneration(D96Visitor):
         indexlist += [self.visit(ctx.expr())]
         ctx = ctx.expr7()
         while ctx.LS():
-            # indexlist += [self.visit(ctx.expr7(1))]
             indexlist += [self.visit(ctx.expr())]
             ctx = ctx.expr7()
         arr = self.visit(ctx)
