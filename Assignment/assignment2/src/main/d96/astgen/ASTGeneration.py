@@ -1,4 +1,3 @@
-from unittest import result
 from D96Visitor import D96Visitor
 from D96Parser import D96Parser
 from AST import *
