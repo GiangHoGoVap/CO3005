@@ -58,15 +58,13 @@ class ASTGeneration(D96Visitor):
         if ctx.AttriType().getText() == "Val":
             for x in res:
                 if x[1] == True:
-                    if check_class:
-                        ans += [AttributeDecl(Static(), ConstDecl(x[0], vartype, NullLiteral()))]
-                    else:
-                        ans += [AttributeDecl(Static(), ConstDecl(x[0], vartype))]
+                    # Val $a: ABC; -> AttributeDecl(Static(), ConstDecl(Id($a), ClassType(Id(ABC)), None))
+                    # Val $b: Int; -> AttributeDecl(Static(), ConstDecl(Id($a), IntLiteral(), None))
+                    ans += [AttributeDecl(Static(), ConstDecl(x[0], vartype))]
                 else:
-                    if check_class:
-                        ans += [AttributeDecl(Instance(), ConstDecl(x[0], vartype, NullLiteral()))]
-                    else:
-                        ans += [AttributeDecl(Instance(), ConstDecl(x[0], vartype))]
+                    # Val a: ABC; -> AttributeDecl(Instance(), ConstDecl(Id(a), ClassType(Id(ABC)), None))
+                    # Val b: Int; -> AttributeDecl(Instance(), ConstDecl(Id(a), IntLiteral(), None))
+                    ans += [AttributeDecl(Instance(), ConstDecl(x[0], vartype))]
         else:
             for x in res:
                 if x[1] == True:
@@ -187,6 +185,7 @@ class ASTGeneration(D96Visitor):
             param = self.visit(ctx.paramlist())
         else:
             param = []
+        block = self.visit(ctx.blockstate())
         if ctx.DollaID():
             kind = Static()
             name = Id(ctx.DollaID().getText())
@@ -196,7 +195,6 @@ class ASTGeneration(D96Visitor):
             if name == 'main' and len(param) == 0 and classname == 'Program':
                 kind = Static()
             name = Id(name)
-        block = self.visit(ctx.blockstate())
         return MethodDecl(kind, name, param, block)
 
     # paramlist: param (SEMI param)*;
@@ -248,15 +246,16 @@ class ASTGeneration(D96Visitor):
 
         if ctx.AttriType().getText() == "Val":
             for x in ids:
-                if check_class:
-                    ans += [ConstDecl(x, vartype, NullLiteral())]
-                else:
-                    ans += [ConstDecl(x, vartype)]
+                # Val a: ABC; -> ConstDecl(Id(a), ClassType(Id(a)), None)
+                # Val b: Int; -> ConstDecl(Id(b), IntLiteral(), None)
+                ans += [ConstDecl(x, vartype)]
         else:
             for x in ids:
                 if check_class:
+                    # Var a: ABC; -> VarDecl(Id(a), ClassType(Id(a)), NullLiteral())
                     ans += [VarDecl(x, vartype, NullLiteral())]
                 else:
+                    # Var b: Int; -> VarDecl(Id(b), IntLiteral(), None)
                     ans += [VarDecl(x, vartype)]
         return ans
 
