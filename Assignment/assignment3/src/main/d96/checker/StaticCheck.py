@@ -21,7 +21,7 @@ class Symbol:
 class ExpUtils:
     @staticmethod
     def isNotConstOperand(exprType):
-        return type(exprType) in [NewExpr, ArrayCell]
+        return type(exprType) in [NewExpr]
 
     @staticmethod
     def isNotIntFloatType(exprType):
@@ -48,7 +48,8 @@ class StaticChecker(BaseVisitor):
         self.global_env = {}
         self.scope = 0
         # Stack for storing parent class of each class
-        self.parent = []
+        # self.parent = []
+        self.illegal_array_lit = False
 
     def check(self):
         return self.visit(self.ast, StaticChecker.global_envi)
@@ -61,11 +62,12 @@ class StaticChecker(BaseVisitor):
             if x.classname.name == "Program":
                 for y in x.memlist:
                     if type(y) is MethodDecl:
-                        if y.name.name == "main":
+                        if y.name.name == "main" and len(y.param) == 0:
                             flag = True
             self.visit(x, c)
         if flag == False:
             raise NoEntryPoint()
+        return []
 
     def visitClassDecl(self, ast: ClassDecl, c):
         """
@@ -80,12 +82,14 @@ class StaticChecker(BaseVisitor):
             parent_name = ast.parentname.name
             if c.get(parent_name) is None:
                 raise Undeclared(Class(), parent_name)
-            self.parent += [parent_name]
-        else:
-            self.parent += [None]
+            # self.parent += [parent_name]
+        # else:
+        #     self.parent += [None]
         c[class_name] = {}
         for x in ast.memlist:
             self.visit(x, (c[class_name], c))
+        if c[class_name].get("Constructor_method") is None:
+            c[class_name]["Constructor_method"] = ["instance", "method", VoidType(), []]
 
     def visitAttributeDecl(self, ast: AttributeDecl, c):
         """
@@ -108,27 +112,39 @@ class StaticChecker(BaseVisitor):
         (kind, inBlock, symbol_stack, inner_env, outer_env) = c  # kind = 'instance' & inner_env = inner_dict (c[class_name] = {})
         var_name = ast.variable.name
         if inBlock == False:
-            if inner_env.get(var_name) is not None:
+            if inner_env.get(var_name) is not None and type(inner_env[var_name]) is tuple:
                 raise Redeclared(Attribute(), var_name)
         var_type = self.visit(ast.varType, outer_env)
 
-        if (ast.varInit is not None) and not(type(ast.varInit) is NullLiteral):
+        if ast.varInit is not None:
             value = self.visit(ast.varInit, (symbol_stack, inner_env, outer_env, False))
+            if self.illegal_array_lit:
+                raise IllegalArrayLiteral(ast.varInit)
             # Check if value is a variable -> Var a: Int = Self.b;
             if value[0] in ["instance", "static"]:
                 if ExpUtils.isNotAccess(ast.varInit):
                     raise Undeclared(Identifier(), ast.varInit.name)
             
+            if type(var_type) is ClassType:
+                if type(value[2]) is ClassType:
+                    # print("var_type.classname.name: " + var_type.classname.name)
+                    # print("value[2].classname.name: " + value[2].classname.name)
+                    if var_type.classname.name != value[2].classname.name:
+                        raise TypeMismatchInStatement(ast)
+                elif type(value[2]) not in [NullLiteral, NewExpr]:
+                    raise TypeMismatchInStatement(ast)
+
             # If we have an array declaration -> Var a: Array[Int, 3] = Array(1, 2, 3);
             # print("value[2]: " + str(value[2]) + "\n")
             # print("var_type: " + str(type(var_type)) + "\n")
-            if type(var_type) is ArrayType and type(value[2]) is ArrayType:
-                if var_type.size != value[2].size:
+            elif type(var_type) is ArrayType and type(value[2]) is ArrayType: # Array[Array[Int, 2], 2] = Array(Array(1, 2), Array(3, 4))
+                if var_type.size != value[2].size: 
                     raise TypeMismatchInStatement(ast)
-                var_ele_type = var_type.eleType
-                value_ele_type = value[2].eleType
-                # print("var_ele_type: " + str(type(var_ele_type)) + "\n")
-                # print("value_ele_type: " + str(type(value_ele_type)) + "\n")
+                var_ele_type = var_type.eleType # Array[Int, 2]
+                value_ele_type = value[2].eleType # ArrayType(1, 2)
+
+                # print("var_ele_type: " + str(type(var_type.eleType)) + "\n")
+                # print("value_ele_type: " + str(type(value[2].eleType)) + "\n")
                 if not(type(var_ele_type) is type(value_ele_type)):
                     # Check array element type coercion --> Case: Float / Int
                     if not(type(var_ele_type) is FloatType and type(value_ele_type) is IntType):
@@ -137,7 +153,7 @@ class StaticChecker(BaseVisitor):
             # Else: Check if value is a primitive type
             # print("value[2]: " + str(type(value[2])) + "\n") # --> NullLiteral
             # print("var_type: " + str(type(var_type)) + "\n") # --> ClassType
-            if not(type(value[2]) is type(var_type)):
+            elif not(type(value[2]) is type(var_type)):
                 if not(type(var_type) is FloatType and type(value[2]) is IntType):
                     raise TypeMismatchInStatement(ast)
 
@@ -154,39 +170,49 @@ class StaticChecker(BaseVisitor):
         (kind, inBlock, symbol_stack, inner_env, outer_env) = c
         const_name = ast.constant.name
         if inBlock == False:
-            if inner_env.get(const_name) is not None:
+            if inner_env.get(const_name) is not None and type(inner_env[const_name]) is tuple:
                 raise Redeclared(Attribute(), const_name)
-        # Val a: Int = a[1] / New A(); --> Illegal Constant Expr
-        if ast.value is None or ExpUtils.isNotConstOperand(ast.value):
-            raise IllegalConstantExpression(ast.value)
-
-        value = self.visit(ast.value, (symbol_stack, inner_env, outer_env, True))
-        # Check if value is a variable --> Val a: Int = Self.b;
-        if value[0] in ["instance", "static"]:
-            if ExpUtils.isNotAccess(ast.value):
-                raise Undeclared(Identifier(), ast.value.name)
-        if value[1] == "mutable":
-            raise IllegalConstantExpression(ast.value)
 
         const_type = self.visit(ast.constType, outer_env)
-        # If we have a constant array declaration --> Val a: Array[Int, 3] = Array(1, 2, 3);
-        if type(const_type) is ArrayType and type(value[2]) is ArrayType:
-            if const_type.size != value[2].size:
-                raise TypeMismatchInConstant(ast)
-            const_ele_type = const_type.eleType
-            value_ele_type = value[2].eleType
-            if not(type(const_ele_type) is type(value_ele_type)):
-                # Check array element type coercion
-                if not(type(const_ele_type) is FloatType and type(value_ele_type) is IntType):
+        if ast.value is None:
+            if not(type(const_type) is ClassType):
+                raise IllegalConstantExpression(ast.value)
+        else:
+            value = self.visit(ast.value, (symbol_stack, inner_env, outer_env, True))
+            if self.illegal_array_lit:
+                raise IllegalArrayLiteral(ast.value)
+            # Check if value is a variable --> Val a: Int = Self.b;
+            if value[0] in ["instance", "static"]:
+                if ExpUtils.isNotAccess(ast.value):
+                    raise Undeclared(Identifier(), ast.value.name)
+            if value[1] == "mutable":
+                raise IllegalConstantExpression(ast.value)
+
+            if type(const_type) is ClassType:
+                if type(value[2]) is ClassType:
+                    if const_type.classname.name != value[2].classname.name:
+                        raise TypeMismatchInConstant(ast)
+                elif type(value[2]) not in [NullLiteral, NewExpr]:
                     raise TypeMismatchInConstant(ast)
 
-        # Else: other primitive type declaration
-        # print("value[2]: " + str(type(value[2])) + "\n")
-        # print("const_type: " + str(type(const_type)) + "\n")
-        if not(type(value[2]) is type(const_type)):
-            # Check primitive type coercion
-            if not(type(const_type) is FloatType and type(value[2]) is IntType):
-                raise TypeMismatchInConstant(ast)
+            # If we have a constant array declaration --> Val a: Array[Int, 3] = Array(1, 2, 3);
+            elif type(const_type) is ArrayType and type(value[2]) is ArrayType:
+                if const_type.size != value[2].size:
+                    raise TypeMismatchInConstant(ast)
+                const_ele_type = const_type.eleType
+                value_ele_type = value[2].eleType
+                if not(type(const_ele_type) is type(value_ele_type)):
+                    # Check array element type coercion
+                    if not(type(const_ele_type) is FloatType and type(value_ele_type) is IntType):
+                        raise TypeMismatchInConstant(ast)
+
+            # Else: other primitive type declaration
+            # print("value[2]: " + str(type(value[2])) + "\n")
+            # print("const_type: " + str(type(const_type)) + "\n")
+            elif not(type(value[2]) is type(const_type)):
+                # Check primitive type coercion
+                if not(type(const_type) is FloatType and type(value[2]) is IntType):
+                    raise TypeMismatchInConstant(ast)
 
         if inBlock == False:
             inner_env[const_name] = (kind, "immutable", const_type)
@@ -203,9 +229,10 @@ class StaticChecker(BaseVisitor):
             kind = "instance"
         if type(ast.kind) is Static:
             kind = "static"
-        method_name = ast.name.name
+        method_name = ast.name.name + "_method"
+        # if inner_env.get(method_name) is not None and type(inner_env[method_name]) is list:
         if inner_env.get(method_name) is not None:
-            raise Redeclared(Method(), method_name)
+            raise Redeclared(Method(), method_name[:-7])
 
         symbol_stack = []  # Structure: [(name, 'immutable', rettype)]
         scope_stack = [] # Keep the scope
@@ -221,11 +248,13 @@ class StaticChecker(BaseVisitor):
             paramTypeLst += [var_type]
         
         inner_env[method_name] = [kind, "method", None, paramTypeLst]
-        self.visit(ast.body, (symbol_stack, scope_stack, False, inner_env, outer_env))
+        self.visit(ast.body, (symbol_stack, scope_stack, False, inner_env, outer_env, False))
+        if inner_env[method_name][2] is None:
+            inner_env[method_name][2] = VoidType()
 
     def visitBlock(self, ast: Block, c):
         # inst: List[Inst]
-        (symbol_stack, scope_stack, inLoop, inner_env, outer_env) = c
+        (symbol_stack, scope_stack, inLoop, inner_env, outer_env, const_decl_flag) = c
         scope_stack.append(self.scope)
         for x in ast.inst:
             # VarDecl in block
@@ -248,23 +277,32 @@ class StaticChecker(BaseVisitor):
                 symbol_stack += [(const_name, "immutable", const_type)]
             # Others: Stmt
             else:
-                if type(x) is Block:
+                if type(x) is Block or type(x) is For or type(x) is If:
                     self.scope += len(symbol_stack)
-                    self.visit(x, (symbol_stack, scope_stack, inLoop, inner_env, outer_env))
+                    self.visit(x, (symbol_stack, scope_stack, inLoop, inner_env, outer_env, const_decl_flag))
+                elif type(x) is Return: # Check if Destructor has Return stmt 
+                    current_class = list(outer_env)[-1]
+                    current_method = list(outer_env[current_class])[-1]
+                    if current_method == "Destructor_method":
+                        raise TypeMismatchInStatement(x)
+                    self.visit(x, (symbol_stack, inLoop, inner_env, outer_env, False))
                 else:
                     self.visit(x, (symbol_stack, inLoop, inner_env, outer_env, False))
         # Finish checking the block
+        # print("self.scope: " + str(self.scope))
         symbol_stack = symbol_stack[:scope_stack[-1]]
         scope_stack.pop()
 
     def visitId(self, ast: Id, c):
         # name: str
         (symbol_stack, inner_env, outer_env, const_decl_flag) = c
-        for x in symbol_stack:
+        for x in symbol_stack[::-1]:
             if x[0] == ast.name:
                 return x # (name, mutability, rettype)
         if inner_env.get(ast.name) is not None:
-            return inner_env[ast.name] # (kind, mutability, rettype) / (kind, mutability, rettype, paramTypeLst)
+            return inner_env[ast.name] # (kind, mutability, rettype) / [kind, mutability, rettype, paramTypeLst]
+        if outer_env.get(ast.name) is not None:
+            return ast.name
         raise Undeclared(Identifier(), ast.name)
 
     def visitAssign(self, ast, c):
@@ -304,6 +342,10 @@ class StaticChecker(BaseVisitor):
                 if not(type(lhs_eleType) is FloatType and type(expr_eleType) is IntType):
                     raise TypeMismatchInStatement(ast)
 
+        if type(lhs_type) is ClassType and type(expr_type) is ClassType:
+            if lhs_type.classname.name != expr_type.classname.name:
+                raise TypeMismatchInStatement(ast)
+
         # print("lhs_type: " + str(type(lhs_type)) + "\n")
         # print("expr_type: " + str(type(expr_type)) + "\n")
         if not(type(lhs_type) is type(expr_type)):
@@ -316,7 +358,7 @@ class StaticChecker(BaseVisitor):
                     if not(type(lhs_eleType) is FloatType and type(expr_type) is IntType):
                         raise TypeMismatchInStatement(ast)
             
-            elif not(type(lhs_type) is FloatType and expr_type is IntType):
+            elif not(type(lhs_type) is FloatType and type(expr_type) is IntType):
                 # print("lhs_type2: " + str(type(lhs_type)))
                 # print("expr_type2: " + str(expr_type))
                 raise TypeMismatchInStatement(ast)
@@ -327,7 +369,7 @@ class StaticChecker(BaseVisitor):
         thenStmt: Stmt
         elseStmt: Stmt = None  # None if there is no else branch
         """
-        (symbol_stack, inLoop, inner_env, outer_env, const_decl_flag) = c
+        (symbol_stack, scope_stack, inLoop, inner_env, outer_env, const_decl_flag) = c
         if_expr = self.visit(ast.expr, (symbol_stack, inner_env, outer_env, const_decl_flag))
         # If if_Expr is an Attribute, it needs CallExpr 
         if if_expr[0] in ["instance", "static"]:
@@ -335,8 +377,9 @@ class StaticChecker(BaseVisitor):
                 raise Undeclared(Identifier(), ast.expr.name)
         if type(if_expr[2]) is not BoolType:
             raise TypeMismatchInStatement(ast)
-        self.visit(ast.thenStmt, (symbol_stack, inLoop, inner_env))
-        self.visit(ast.elseStmt, (symbol_stack, inLoop, inner_env))
+        self.visit(ast.thenStmt, (symbol_stack, scope_stack, inLoop, inner_env, outer_env, const_decl_flag))
+        if ast.elseStmt is not None:
+            self.visit(ast.elseStmt, (symbol_stack, scope_stack, inLoop, inner_env, outer_env, const_decl_flag))
 
     def visitFor(self, ast: For, c):
         """
@@ -346,8 +389,8 @@ class StaticChecker(BaseVisitor):
         loop: Stmt
         expr3: Expr = None
         """
-        (symbol_stack, inLoop, inner_env, outer_env, const_decl_flag) = c
-        idType = self.visit(ast.id, (symbol_stack, inner_env))
+        (symbol_stack, scope_stack, inLoop, inner_env, outer_env, const_decl_flag) = c
+        idType = self.visit(ast.id, (symbol_stack, inner_env, outer_env, const_decl_flag))
         expr1Type = self.visit(ast.expr1, (symbol_stack, inner_env, outer_env, const_decl_flag))
         expr2Type = self.visit(ast.expr2, (symbol_stack, inner_env, outer_env, const_decl_flag))
         if ast.expr3 is not None:
@@ -355,8 +398,8 @@ class StaticChecker(BaseVisitor):
             if expr3Type[0] in ["instance", "static"]:
                 if ExpUtils.isNotAccess(ast.expr3):
                     raise Undeclared(Identifier(), ast.expr3.name)
-                if not(type(expr3Type[2] is IntType)):  # The type of three expression <expr1>, <expr2>, <expr3> must be in integer
-                    raise TypeMismatchInStatement(ast)
+            if not(type(expr3Type[2]) is IntType):  # The type of three expression <expr1>, <expr2>, <expr3> must be in integer
+                raise TypeMismatchInStatement(ast)
 
         if idType[0] in ["instance", "static"]:
             if ExpUtils.isNotAccess(ast.id):
@@ -374,7 +417,7 @@ class StaticChecker(BaseVisitor):
             raise TypeMismatchInStatement(ast)
 
         # Visit statements
-        self.visit(ast.loop, (symbol_stack, True, inner_env, outer_env))
+        self.visit(ast.loop, (symbol_stack, scope_stack, True, inner_env, outer_env, const_decl_flag))
 
     def visitBreak(self, ast, c):
         (symbol_stack, inLoop, inner_env, outer_env, const_decl_flag) = c
@@ -389,13 +432,20 @@ class StaticChecker(BaseVisitor):
     def visitReturn(self, ast, c):
         # expr: Expr = None
         (symbol_stack, inLoop, inner_env, outer_env, const_decl_flag) = c
+        current_class = list(outer_env)[-1]
+        current_method = list(outer_env[current_class])[-1]
+        # print("current_class: " + current_class)
+        # print("current_method: " + current_method)
+        if current_method == "Constructor_method":
+            if ast.expr is not None:
+                raise TypeMismatchInStatement(ast)
+
         if ast.expr is not None:
             return_type = self.visit(ast.expr, (symbol_stack, inner_env, outer_env, const_decl_flag))
             if return_type[0] in ["instance", "static"]: # Return Attribute
                 if ExpUtils.isNotAccess(ast.expr):
                     raise Undeclared(Identifier(), ast.expr.name)
-        current_class = list(outer_env)[-1]
-        current_method = list(outer_env[current_class])[-1]
+        
         method_rettype = outer_env[current_class][current_method][2]
         if method_rettype is None:
             if ast.expr is None:
@@ -403,7 +453,7 @@ class StaticChecker(BaseVisitor):
             else:
                 outer_env[current_class][current_method][2] = return_type[2]
         else:
-            if not(method_rettype is return_type[2]):
+            if not(type(method_rettype) is type(return_type[2])):
                 raise TypeMismatchInStatement(ast)
 
     def visitCallStmt(self, ast, c):
@@ -421,6 +471,7 @@ class StaticChecker(BaseVisitor):
             method = self.getInfoAccess(ast.method, (Method(), current_class, outer_env))
             if method[0] == "static":
                 raise IllegalMemberAccess(ast)
+            
         else:
             if isDolla:
                 if outer_env.get(ast.obj.name) is not None:
@@ -436,16 +487,18 @@ class StaticChecker(BaseVisitor):
                 method = self.getInfoAccess(ast.method, (Method(), class_name[2].classname.name, outer_env))
                 if method[0] == "static":
                     raise IllegalMemberAccess(ast)
-                if method[1] != "method":
-                    raise TypeMismatchInExpression(ast)
 
             # Case 2: E.b();
             if type(class_name) is str:
                 method = self.getInfoAccess(ast.method, (Method(), class_name, outer_env))
                 if method[0] == "instance":
                     raise IllegalMemberAccess(ast)
-                if method[1] != "method":
-                    raise TypeMismatchInExpression(ast)
+        
+            if method[1] != "method":
+                raise TypeMismatchInExpression(ast)
+    
+        if not(type(method[2]) is VoidType):
+            raise TypeMismatchInStatement(ast)
 
         arg = list(map(lambda x: self.visit(x, (symbol_stack, inner_env, outer_env, const_decl_flag)), ast.param))
         if len(arg) != len(method[3]):
@@ -464,7 +517,6 @@ class StaticChecker(BaseVisitor):
         left: Expr
         right: Expr
         """
-        # Because array element has been changed from literal to expr --> a = b + c[1]; --> Illegal Constant Expression
         if ExpUtils.isNotConstOperand(ast.left) or ExpUtils.isNotConstOperand(ast.right):
             raise IllegalConstantExpression(ast)
         (symbol_stack, inner_env, outer_env, const_decl_flag) = c
@@ -498,6 +550,10 @@ class StaticChecker(BaseVisitor):
             if type(lhs[2]) is BoolType and type(rhs[2]) is BoolType:
                 return (None, None, BoolType())
             raise TypeMismatchInExpression(ast)
+        elif op in ["==."]:
+            if type(lhs[2]) is StringType and type(rhs[2]) is StringType:
+                return (None, None, BoolType())
+            raise TypeMismatchInExpression(ast)
         # -------------------String operators-------------------
         elif op in ["+."]:
             if type(lhs[2]) is StringType and type(rhs[2]) is StringType:
@@ -507,12 +563,13 @@ class StaticChecker(BaseVisitor):
         elif op in ["==", "!="]:
             if ExpUtils.isNotIntBoolType(lhs[2]) or ExpUtils.isNotIntBoolType(rhs[2]):
                 raise TypeMismatchInExpression(ast)
+            return (None, None, BoolType())
         elif op in ["<", ">", "<=", ">="]:
             if ExpUtils.isNotIntFloatType(lhs[2]) or ExpUtils.isNotIntFloatType(rhs[2]):
                 raise TypeMismatchInExpression(ast)
-            elif type(lhs[2]) is FloatType or type(rhs[2]) is FloatType:
-                return (None, None, FloatType())
-            return (None, None, IntType())
+            # elif type(lhs[2]) is FloatType or type(rhs[2]) is FloatType:
+            #     return (None, None, FloatType())
+            return (None, None, BoolType())
 
     def visitUnaryOp(self, ast: UnaryOp, c):
         """
@@ -585,13 +642,18 @@ class StaticChecker(BaseVisitor):
     def getInfoAccess(self, ast, c):
         # env[method_name] = [kind, "method", None, paramTypeLst]
         kind, class_name, env = c
-            
         # Case 1: If class E really has b()
-        if env[class_name].get(ast.name) is not None:
-            return env[class_name][ast.name]  # (kind, mutability, rettype) / [kind, "method", None, paramTypeLst]
-        
+        if type(kind) is Method:
+            method_name = ast.name + "_method"
+            if env[class_name].get(method_name) is not None:
+                return env[class_name][method_name] # [kind, "method", None, paramTypeLst]
+        else:
+            if env[class_name].get(ast.name) is not None:
+                return env[class_name][ast.name] # (kind, mutability, rettype) 
+        # ---------------------------INHERITANCE---------------------------
         # Case 2: If class E is inherited from another class A and class A has b(), not class E
         # Step 1: Get the index of class E in the dictionary
+        '''
         index = list(env).index(class_name)
         # Step 2: Access to the stack parent by the above index
         if self.parent[index] is not None:
@@ -599,7 +661,9 @@ class StaticChecker(BaseVisitor):
             # Step 3: Check if parent class has b()
             if env[parent_name].get(ast.name) is not None:
                 return env[parent_name][ast.name]
-        
+        '''
+        if type(kind) is Method:
+            raise Undeclared(kind, ast.name)
         raise Undeclared(kind, ast.name)
 
     def visitNewExpr(self, ast, c):
@@ -611,19 +675,16 @@ class StaticChecker(BaseVisitor):
         class_name = ast.classname.name
         if outer_env.get(class_name) is None:
             raise Undeclared(Class(), ast.classname.name)
+        
+            # Make sure that Constructor in env is a method, not a variable
+        if outer_env[class_name]["Constructor_method"][1] == "method" and outer_env[class_name]["Constructor_method"][0] == "instance":
+            # constructor: (kind, "method", None, param)
+            constructor = outer_env[class_name]["Constructor_method"]
+        
+        arg = list(map(lambda x: self.visit(x, (symbol_stack, inner_env, outer_env, const_decl_flag)), ast.param))
+        if len(arg) != len(constructor[3]):
+            raise TypeMismatchInExpression(ast)
         if len(ast.param) != 0:
-            if outer_env[class_name].get("Constructor") is not None:
-                # Make sure that Constructor in env is a method, not a variable
-                if outer_env[class_name]["Constructor"][1] == "method" and outer_env[class_name]["Constructor"][0] == "instance":
-                    # constructor: (kind, "method", None, param)
-                    constructor = outer_env[class_name]["Constructor"]
-            else:
-                raise Undeclared(Method(), "Constructor")
-            
-            arg = list(map(lambda x: self.visit(x, (symbol_stack, inner_env, outer_env, const_decl_flag)), ast.param))
-            if len(arg) != len(constructor[3]):
-                raise TypeMismatchInExpression(ast)
-
             for i in range(len(arg)):
                 arg_type = arg[i][2]
                 param_type = constructor[3][i]
@@ -640,12 +701,21 @@ class StaticChecker(BaseVisitor):
         """
         (symbol_stack, inner_env, outer_env, const_decl_flag) = c
         arrType = self.visit(ast.arr, (symbol_stack, inner_env, outer_env, const_decl_flag))
+        # print("arrType: ", str(arrType[2]))
+        count = len(ast.idx) - 1
+        clone = arrType[2]
+        clone = clone.eleType
+        while count > 0:
+            if type(clone) is ArrayType:
+                clone = clone.eleType
+            else: 
+                raise TypeMismatchInExpression(ast)
+            count -= 1
         for x in ast.idx:
             idxType = self.visit(x, (symbol_stack, inner_env, outer_env, const_decl_flag))
             if not(type(idxType[2]) is IntType) or not(type(arrType[2]) is ArrayType):
                 raise TypeMismatchInExpression(ast)
-        # print("arrType[2]: " + str(arrType[2]))
-        return (None, None, arrType[2])
+        return (None, arrType[1], clone)
 
     def visitFieldAccess(self, ast, c):
         """
@@ -677,17 +747,19 @@ class StaticChecker(BaseVisitor):
                 field_name = self.getInfoAccess(ast.fieldname, (Attribute(), class_name[2].classname.name, outer_env))
                 if field_name[0] == "static":
                     raise IllegalMemberAccess(ast)
-                if field_name[1] == "method":
-                    raise TypeMismatchInExpression(ast)
 
             # Case 2: E.b
             if type(class_name) is str:
                 field_name = self.getInfoAccess(ast.fieldname, (Attribute(), class_name, outer_env))
                 if field_name[0] == "instance":
                     raise IllegalMemberAccess(ast)
-                if field_name[1] == "method":
-                    raise TypeMismatchInExpression(ast)
         
+            if field_name[1] == "method":
+                raise TypeMismatchInExpression(ast)
+        
+        # print("field_name[0]: " + field_name[0])
+        # print("field_name[1]: " + field_name[1])
+        # print("field_name[2]: " + str(field_name[2]))
         return field_name
 
     def visitIntLiteral(self, ast:IntLiteral, c):
@@ -709,13 +781,33 @@ class StaticChecker(BaseVisitor):
         return (None, None, SelfLiteral())
 
     def visitArrayLiteral(self, ast, c):
-        # value: List[Expr]
+        # value: List[Expr] 
         (symbol_stack, inner_env, outer_env, const_decl_flag) = c
+        # Array(Array(1, 2), Array(3, 4.5))
+        # --> [(None, None, IntType()), (None, None, IntType()), (None, None, IntType()), (None, None, IntType()), 
+        #      (None, None, ArrayType(2, IntType())), (None, None, ArrayType(2, IntType()))]
         valueLst = list(map(lambda x: self.visit(x, (symbol_stack, inner_env, outer_env, const_decl_flag)), ast.value))
+        # for i in valueLst:
+        #     print("i in valueLst: ", i)
+        # print("valueLst[0][2]: ", str(valueLst[0][2]))
+        if type(valueLst[0][2]) is ArrayType:
+            typeLst = []
+            for i in valueLst:
+                typeLst.append(i[2]) # [ArrayType(2, IntType()), ArrayType(2, IntType())]
+            first_ele = typeLst[0]
+            for i in typeLst:
+                # print("i: ", i)
+                if i.size != first_ele.size:
+                    raise TypeMismatchInStatement(ast)
+                if not(type(i.eleType) is type(first_ele.eleType)) or self.illegal_array_lit:
+                    raise IllegalArrayLiteral(ast)
+            return (None, None, ArrayType(len(typeLst), first_ele)) # --> (None, None, ArrayType(2, Array(2, IntType())))
+        
         first_ele_type = valueLst[0][2]
         for ele_type in valueLst:
             if not(type(ele_type[2]) is type(first_ele_type)):
-                raise IllegalArrayLiteral(ast)
+                self.illegal_array_lit = True
+                # raise IllegalArrayLiteral(ast)
         return (None, None, ArrayType(len(valueLst), first_ele_type))
 
     def visitIntType(self, ast, c):
