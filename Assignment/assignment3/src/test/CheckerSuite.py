@@ -11,7 +11,8 @@ class CheckerSuite(unittest.TestCase):
             Class A{}
             Class Program{
                 main(){}
-            }"""
+            }
+        """
         expect = "Redeclared Class: A"
         self.assertTrue(TestChecker.test(input, expect, 400))
 
@@ -23,7 +24,7 @@ class CheckerSuite(unittest.TestCase):
                 main(){}
             }
             Class Program{}
-            """
+        """
         expect = "Redeclared Class: Program"
         self.assertTrue(TestChecker.test(input, expect, 401))
 
@@ -36,7 +37,8 @@ class CheckerSuite(unittest.TestCase):
             }
             Class Program{
                 main(){}
-            }"""
+            }
+        """
         expect = "Redeclared Attribute: a"
         self.assertTrue(TestChecker.test(input, expect, 402))
 
@@ -49,7 +51,8 @@ class CheckerSuite(unittest.TestCase):
             }
             Class Program{
                 main(){}
-            }"""
+            }
+        """
         expect = "Redeclared Attribute: $a"
         self.assertTrue(TestChecker.test(input, expect, 403))
 
@@ -60,7 +63,8 @@ class CheckerSuite(unittest.TestCase):
                 Val $b: Float = 3.5;
                 Var $b: Int;
                 main(){}
-            }"""
+            }
+        """
         expect = "Redeclared Attribute: $b"
         self.assertTrue(TestChecker.test(input, expect, 404))
 
@@ -77,7 +81,8 @@ class CheckerSuite(unittest.TestCase):
     #                 Val b: Int = 1;
     #             }
     #             main(){}
-    #         }"""
+    #         }
+    #     """
     #     expect = "Redeclared Attribute: b"
     #     self.assertTrue(TestChecker.test(input, expect, 405))
 
@@ -94,7 +99,8 @@ class CheckerSuite(unittest.TestCase):
                 }
                 Val $b: Int = 3;
                 main(){}
-            }"""
+            }
+        """
         expect = "Redeclared Attribute: $b"
         self.assertTrue(TestChecker.test(input, expect, 405))
 
@@ -107,7 +113,8 @@ class CheckerSuite(unittest.TestCase):
             }
             Class Program{
                 main(){}
-            }"""
+            }
+        """
         expect = "Redeclared Method: a"
         self.assertTrue(TestChecker.test(input, expect, 406))
 
@@ -121,7 +128,8 @@ class CheckerSuite(unittest.TestCase):
             }
             Class Program{
                 main(){}
-            }"""
+            }
+        """
         expect = "Redeclared Method: $a"
         self.assertTrue(TestChecker.test(input, expect, 407))
 
@@ -135,7 +143,8 @@ class CheckerSuite(unittest.TestCase):
             }
             Class Program{
                 main(){}
-            }"""
+            }
+        """
         expect = "Redeclared Method: a"
         self.assertTrue(TestChecker.test(input, expect, 408))
 
@@ -149,7 +158,8 @@ class CheckerSuite(unittest.TestCase):
             }
             Class Program{
                 main(){}
-            }"""
+            }
+        """
         expect = "Redeclared Method: $b"
         self.assertTrue(TestChecker.test(input, expect, 409))
 
@@ -169,7 +179,8 @@ class CheckerSuite(unittest.TestCase):
             }
             Class Program{
                 main(){}
-            }"""
+            }
+        """
         expect = "Redeclared Method: Constructor"
         self.assertTrue(TestChecker.test(input, expect, 410))
 
@@ -186,7 +197,8 @@ class CheckerSuite(unittest.TestCase):
             }
             Class Program{
                 main(){}
-            }"""
+            }
+        """
         expect = "Redeclared Method: Destructor"
         self.assertTrue(TestChecker.test(input, expect, 411))
 
@@ -200,7 +212,8 @@ class CheckerSuite(unittest.TestCase):
             }
             Class Program{
                 main(){}
-            }"""
+            }
+        """
         expect = "Redeclared Variable: a"
         self.assertTrue(TestChecker.test(input, expect, 412))
 
@@ -214,7 +227,8 @@ class CheckerSuite(unittest.TestCase):
             }
             Class Program{
                 main(){}
-            }"""
+            }
+        """
         expect = "Redeclared Variable: a"
         self.assertTrue(TestChecker.test(input, expect, 413))
 
@@ -236,7 +250,8 @@ class CheckerSuite(unittest.TestCase):
                 main(){
                     A.foo(1, 2);
                 }
-            }"""
+            }
+        """
         expect = "Redeclared Variable: b"
         self.assertTrue(TestChecker.test(input, expect, 414))
 
@@ -262,7 +277,8 @@ class CheckerSuite(unittest.TestCase):
                 main(){
                     A.foo(1, 2);
                 }
-            }"""
+            }
+        """
         expect = "Redeclared Variable: b"
         self.assertTrue(TestChecker.test(input, expect, 415))
 
@@ -276,7 +292,8 @@ class CheckerSuite(unittest.TestCase):
             }
             Class Program{
                 main(){}
-            }"""
+            }
+        """
         expect = "Redeclared Constant: a"
         self.assertTrue(TestChecker.test(input, expect, 416))
 
@@ -291,7 +308,8 @@ class CheckerSuite(unittest.TestCase):
             }
             Class Program{
                 main(){}
-            }"""
+            }
+        """
         expect = "Redeclared Constant: a"
         self.assertTrue(TestChecker.test(input, expect, 417))
 
@@ -309,7 +327,8 @@ class CheckerSuite(unittest.TestCase):
             }
             Class Program{
                 main(){}
-            }"""
+            }
+        """
         expect = "Redeclared Constant: a"
         self.assertTrue(TestChecker.test(input, expect, 418))
 
@@ -321,7 +340,8 @@ class CheckerSuite(unittest.TestCase):
             }
             Class Program{
                 main(){}
-            }"""
+            }
+        """
         expect = "Redeclared Parameter: a"
         self.assertTrue(TestChecker.test(input, expect, 419))
 
@@ -334,7 +354,8 @@ class CheckerSuite(unittest.TestCase):
             }
             Class Program{
                 main(){}
-            }"""
+            }
+        """
         expect = "Redeclared Parameter: a"
         self.assertTrue(TestChecker.test(input, expect, 420))
 
@@ -345,7 +366,8 @@ class CheckerSuite(unittest.TestCase):
             Class B: C{}
             Class Program{
                 main(){}
-            }"""
+            }
+        """
         expect = "Undeclared Class: C"
         self.assertTrue(TestChecker.test(input, expect, 421))
 
@@ -355,7 +377,8 @@ class CheckerSuite(unittest.TestCase):
             Class B: A{}
             Class Program: C{
                 main(){}
-            }"""
+            }
+        """
         expect = "Undeclared Class: C"
         self.assertTrue(TestChecker.test(input, expect, 422))
 
@@ -367,7 +390,8 @@ class CheckerSuite(unittest.TestCase):
                 main(){
                     Var a: C;
                 }
-            }"""
+            }
+        """
         expect = "Undeclared Class: C"
         self.assertTrue(TestChecker.test(input, expect, 423))
 
@@ -378,7 +402,8 @@ class CheckerSuite(unittest.TestCase):
                     Var A: Int;
                     Var x: Int = A::$a;
                 }
-            }"""
+            }
+        """
         expect = "Undeclared Class: A"
         self.assertTrue(TestChecker.test(input, expect, 424)) 
 
@@ -387,7 +412,8 @@ class CheckerSuite(unittest.TestCase):
             Class A : A{}
             Class Program{
                 main(){}
-            }"""
+            }
+        """
         expect = "Undeclared Class: A"
         self.assertTrue(TestChecker.test(input, expect, 425))
 
@@ -406,7 +432,8 @@ class CheckerSuite(unittest.TestCase):
                     Var b: Int;
                     b = a.y;
                 }
-            }"""
+            }
+        """
         expect = "Undeclared Attribute: y"
         self.assertTrue(TestChecker.test(input, expect, 426))
 
@@ -427,7 +454,8 @@ class CheckerSuite(unittest.TestCase):
                     Var x: B = New B();
                     Val b: Float = x.a;
                 }
-            }"""
+            }
+        """
         expect = "Undeclared Attribute: a"
         self.assertTrue(TestChecker.test(input, expect, 427))
 
@@ -445,7 +473,8 @@ class CheckerSuite(unittest.TestCase):
                     Var b: Int = A::$a;
                     Var c: Int = A::$x;
                 }
-            }"""
+            }
+        """
         expect = "Undeclared Attribute: $x"
         self.assertTrue(TestChecker.test(input, expect, 428))
 
@@ -464,7 +493,8 @@ class CheckerSuite(unittest.TestCase):
                     a.a = 2;
                     a.d = 2;
                 }
-            }"""
+            }
+        """
         expect = "Undeclared Attribute: d"
         self.assertTrue(TestChecker.test(input, expect, 429))
 
@@ -482,7 +512,8 @@ class CheckerSuite(unittest.TestCase):
                     A::$a = 2;
                     A::$d = 2;
                 }
-            }"""
+            }
+        """
         expect = "Undeclared Attribute: $d"
         self.assertTrue(TestChecker.test(input, expect, 430))
 
@@ -508,7 +539,8 @@ class CheckerSuite(unittest.TestCase):
                     Var b: Int = a.foo1(1, 2);
                     Var c: Int = a.foo2();
                 }
-            }"""
+            }
+        """
         expect = "Undeclared Method: foo2"
         self.assertTrue(TestChecker.test(input, expect, 431))
 
@@ -528,7 +560,8 @@ class CheckerSuite(unittest.TestCase):
                     a.foo(1, 2);
                     A::$foo();
                 }
-            }"""
+            }
+        """
         expect = "Undeclared Method: $foo"
         self.assertTrue(TestChecker.test(input, expect, 432))
     
@@ -556,7 +589,8 @@ class CheckerSuite(unittest.TestCase):
                     Var b: Int = a.foo1(1, 2);
                     Var c: Int = a.foo1(1, 2) + a.foo2() + a.foo3();
                 }
-            }"""
+            }
+        """
         expect = "Undeclared Method: foo3"
         self.assertTrue(TestChecker.test(input, expect, 433))
     
@@ -588,7 +622,8 @@ class CheckerSuite(unittest.TestCase):
                     Var c: Int;
                     c = b + A::$foo2() - a.foo1(1, 2);
                 }
-            }"""
+            }
+        """
         expect = "Undeclared Method: foo1"
         self.assertTrue(TestChecker.test(input, expect, 434))
 
@@ -605,7 +640,8 @@ class CheckerSuite(unittest.TestCase):
                     Var y: Int = A.a;
                     Var z: Int = A.foo();
                 }
-            }"""
+            }
+        """
         expect = "Undeclared Method: foo"
         self.assertTrue(TestChecker.test(input, expect, 435)) 
 
@@ -616,7 +652,8 @@ class CheckerSuite(unittest.TestCase):
                     Var a: Int;
                     Var b: Int = c;
                 }
-            }"""
+            }
+        """
         expect = "Undeclared Identifier: c"
         self.assertTrue(TestChecker.test(input, expect, 436))
 
@@ -629,7 +666,8 @@ class CheckerSuite(unittest.TestCase):
                 main(){
                     a.foo();
                 }
-            }"""
+            }
+        """
         expect = "Undeclared Identifier: a"
         self.assertTrue(TestChecker.test(input, expect, 437))
 
@@ -642,7 +680,8 @@ class CheckerSuite(unittest.TestCase):
                 main(){
                     x.a = 2;
                 }
-            }"""
+            }
+        """
         expect = "Undeclared Identifier: x"
         self.assertTrue(TestChecker.test(input, expect, 438))
     
@@ -657,7 +696,8 @@ class CheckerSuite(unittest.TestCase):
                     Var b: Int;
                     b = a + c.foo();
                 }
-            }"""
+            }
+        """
         expect = "Undeclared Identifier: c"
         self.assertTrue(TestChecker.test(input, expect, 439))
     
@@ -670,7 +710,8 @@ class CheckerSuite(unittest.TestCase):
                         a = i;
                     }
                 }
-            }"""
+            }
+        """
         expect = "Undeclared Identifier: i"
         self.assertTrue(TestChecker.test(input, expect, 440))
 
@@ -689,7 +730,8 @@ class CheckerSuite(unittest.TestCase):
                         }
                     }
                 }
-            }"""
+            }
+        """
         expect = "Undeclared Identifier: b"
         self.assertTrue(TestChecker.test(input, expect, 441))
 
@@ -705,7 +747,8 @@ class CheckerSuite(unittest.TestCase):
                     Var a: A;
                     Var b: Int = a.foo();
                 }
-            }"""
+            }
+        """
         expect = "Undeclared Identifier: x"
         self.assertTrue(TestChecker.test(input, expect, 442))
 
@@ -722,7 +765,8 @@ class CheckerSuite(unittest.TestCase):
                     Var b: Int = a.foo();
                     c = b - 1;
                 }
-            }"""
+            }
+        """
         expect = "Undeclared Identifier: c"
         self.assertTrue(TestChecker.test(input, expect, 443))
 
@@ -740,7 +784,8 @@ class CheckerSuite(unittest.TestCase):
                     Var c: Int;
                     c = a + b - d;
                 }
-            }"""
+            }
+        """
         expect = "Undeclared Identifier: d"
         self.assertTrue(TestChecker.test(input, expect, 444))
 
@@ -752,7 +797,8 @@ class CheckerSuite(unittest.TestCase):
                     Val a: Int = 1;
                     a = 2;
                 }
-            }"""
+            }
+        """
         expect = "Cannot Assign To Constant: AssignStmt(Id(a),IntLit(2))"
         self.assertTrue(TestChecker.test(input, expect, 445))
 
@@ -766,7 +812,8 @@ class CheckerSuite(unittest.TestCase):
                     Var b: A;
                     b.a = 2;
                 }
-            }"""
+            }
+        """
         expect = "Cannot Assign To Constant: AssignStmt(FieldAccess(Id(b),Id(a)),IntLit(2))"
         self.assertTrue(TestChecker.test(input, expect, 446))
 
@@ -779,7 +826,8 @@ class CheckerSuite(unittest.TestCase):
                 main(){
                     A::$a = 2;
                 }
-            }"""
+            }
+        """
         expect = "Cannot Assign To Constant: AssignStmt(FieldAccess(Id(A),Id($a)),IntLit(2))"
         self.assertTrue(TestChecker.test(input, expect, 447))
 
@@ -793,7 +841,8 @@ class CheckerSuite(unittest.TestCase):
                         a = i;
                     }
                 }
-            }"""
+            }
+        """
         expect = "Cannot Assign To Constant: AssignStmt(Id(a),Id(i))"
         self.assertTrue(TestChecker.test(input, expect, 448))
 
@@ -807,7 +856,8 @@ class CheckerSuite(unittest.TestCase):
                         a = 1 + i;
                     }
                 }
-            }"""
+            }
+        """
         expect = "Cannot Assign To Constant: IntLit(1)"
         self.assertTrue(TestChecker.test(input, expect, 449))
 
@@ -1003,7 +1053,8 @@ class CheckerSuite(unittest.TestCase):
                     a.a.length = 3;
                     a.a.width = 3.5;
                 }
-            }"""
+            }
+        """
         expect = "Type Mismatch In Statement: AssignStmt(FieldAccess(FieldAccess(Id(a),Id(a)),Id(width)),FloatLit(3.5))"
         self.assertTrue(TestChecker.test(input, expect, 461))
 
@@ -1014,7 +1065,8 @@ class CheckerSuite(unittest.TestCase):
                 main(){
                     Self.a[1] = "a";
                 }
-            }"""
+            }
+        """
         expect = "Type Mismatch In Statement: AssignStmt(ArrayCell(FieldAccess(Self(),Id(a)),[IntLit(1)]),StringLit(a))"
         self.assertTrue(TestChecker.test(input, expect, 462))
 
@@ -1025,7 +1077,8 @@ class CheckerSuite(unittest.TestCase):
                 main(){
                     Self.a[1] = Array(1.5, 2.5);
                 }
-            }"""
+            }
+        """
         expect = "Type Mismatch In Statement: AssignStmt(ArrayCell(FieldAccess(Self(),Id(a)),[IntLit(1)]),[FloatLit(1.5),FloatLit(2.5)])"
         self.assertTrue(TestChecker.test(input, expect, 463))
     
@@ -1045,7 +1098,8 @@ class CheckerSuite(unittest.TestCase):
                     Var a: Int;
                     a = x.foo(1.5, 2);
                 }
-            }"""
+            }
+        """
         expect = "Type Mismatch In Statement: AssignStmt(Id(a),CallExpr(Id(x),Id(foo),[FloatLit(1.5),IntLit(2)]))"
         self.assertTrue(TestChecker.test(input, expect, 464))
 
@@ -1067,7 +1121,8 @@ class CheckerSuite(unittest.TestCase):
                     Var y: Int = 1;
                     y = 1 + x.foo1() + A::$foo2();
                 }
-            }"""
+            }
+        """
         expect = "Type Mismatch In Statement: AssignStmt(Id(y),BinaryOp(+,BinaryOp(+,IntLit(1),CallExpr(Id(x),Id(foo1),[])),CallExpr(Id(A),Id($foo2),[])))"
         self.assertTrue(TestChecker.test(input, expect, 465))
 
@@ -1090,7 +1145,8 @@ class CheckerSuite(unittest.TestCase):
                     Var z: Int;
                     z = x.a * y * x.foo1() / A::$foo2() - 1.5;
                 }
-            }"""
+            }
+        """
         expect = "Type Mismatch In Statement: AssignStmt(Id(z),BinaryOp(-,BinaryOp(/,BinaryOp(*,BinaryOp(*,FieldAccess(Id(x),Id(a)),Id(y)),CallExpr(Id(x),Id(foo1),[])),CallExpr(Id(A),Id($foo2),[])),FloatLit(1.5)))"
         self.assertTrue(TestChecker.test(input, expect, 466)) 
 
@@ -1105,7 +1161,8 @@ class CheckerSuite(unittest.TestCase):
                     Var x: A;
                     Var y: Int = x.a + A::$a;
                 }
-            }"""
+            }
+        """
         expect = "Type Mismatch In Statement: VarDecl(Id(y),IntType,BinaryOp(+,FieldAccess(Id(x),Id(a)),FieldAccess(Id(A),Id($a))))"
         self.assertTrue(TestChecker.test(input, expect, 467))  
 
@@ -1119,7 +1176,8 @@ class CheckerSuite(unittest.TestCase):
                     Self.a[2] = Array(3, 4);
                     Self.a = Array(Array(3.5, 5.5), Array(3.5, 4.5));
                 }
-            }"""
+            }
+        """
         expect = "Type Mismatch In Statement: "
         self.assertTrue(TestChecker.test(input, expect, 458))
     '''
@@ -1293,7 +1351,8 @@ class CheckerSuite(unittest.TestCase):
             }
             Class Program{
                 main(){}
-            }"""
+            }
+        """
         expect = "Illegal Constant Expression: None"
         self.assertTrue(TestChecker.test(input, expect, 478))
 
@@ -1308,7 +1367,8 @@ class CheckerSuite(unittest.TestCase):
             }
             Class Program{
                 main(){}
-            }"""
+            }
+        """
         expect = "Illegal Constant Expression: BinaryOp(+,FieldAccess(Self(),Id(x)),FieldAccess(Self(),Id(a)))"
         self.assertTrue(TestChecker.test(input, expect, 479))
 
@@ -1320,7 +1380,8 @@ class CheckerSuite(unittest.TestCase):
             }
             Class Program{
                 main(){}
-            }"""
+            }
+        """
         expect = "Illegal Constant Expression: BinaryOp(+,FieldAccess(Self(),Id(a)),IntLit(1))"
         self.assertTrue(TestChecker.test(input, expect, 480))
 
@@ -1340,7 +1401,8 @@ class CheckerSuite(unittest.TestCase):
                     Val b: Int = 1;
                     Val c: Int = a.x + a.foo(1, 2) + a.a;
                 }
-            }"""
+            }
+        """
         expect = "Illegal Constant Expression: BinaryOp(+,BinaryOp(+,FieldAccess(Id(a),Id(x)),CallExpr(Id(a),Id(foo),[IntLit(1),IntLit(2)])),FieldAccess(Id(a),Id(a)))"
         self.assertTrue(TestChecker.test(input, expect, 481))
 
@@ -1352,7 +1414,8 @@ class CheckerSuite(unittest.TestCase):
                     Var b: Array[Int, 2] = Array(1, 2);
                     Val c: Int = Self.a + b[1];
                 }
-            }"""
+            }
+        """
         expect = "Illegal Constant Expression: BinaryOp(+,FieldAccess(Self(),Id(a)),ArrayCell(Id(b),[IntLit(1)]))"
         self.assertTrue(TestChecker.test(input, expect, 482))
 
@@ -1370,20 +1433,21 @@ class CheckerSuite(unittest.TestCase):
                     Var a: B;
                     Val b: Int = a.a.length;
                 }
-            }"""
+            }
+        """
         expect = "Illegal Constant Expression: FieldAccess(FieldAccess(Id(a),Id(a)),Id(length))"
         self.assertTrue(TestChecker.test(input, expect, 483))
 
     def test_illegal_const_7(self):
         input = """
-        Class Program{
-            Var a: Int = 10; 
-            foo(){ 
-                Var a: Array[Int, 3] = Array(Self.a, 1, 2);
-                Val b: Int = a[0];
+            Class Program{
+                Var a: Int = 10; 
+                foo(){ 
+                    Var a: Array[Int, 3] = Array(Self.a, 1, 2);
+                    Val b: Int = a[0];
+                }
+                main(){}
             }
-            main(){}
-        }
         """
         expect = "Illegal Constant Expression: ArrayCell(Id(a),[IntLit(0)])"
         self.assertTrue(TestChecker.test(input, expect, 484))
@@ -1397,7 +1461,8 @@ class CheckerSuite(unittest.TestCase):
                 Val c: Shape;
                 Val d: String;
                 main(){}
-            }"""
+            }
+        """
         expect = "Illegal Constant Expression: None"
         self.assertTrue(TestChecker.test(input, expect, 485))
 
@@ -1407,7 +1472,8 @@ class CheckerSuite(unittest.TestCase):
             Class Program{
                 Var a: Array[Int, 3] = Array(1, 2, 2.5);
                 main(){}
-            }"""
+            }
+        """
         expect = "Illegal Array Literal: [IntLit(1),IntLit(2),FloatLit(2.5)]"
         self.assertTrue(TestChecker.test(input, expect, 486))
 
@@ -1418,7 +1484,8 @@ class CheckerSuite(unittest.TestCase):
                 main(){
                     Val a: Array[Array[Int, 2], 2] = Array(Array(1, 2), Array(1, 2.5));
                 }
-            }"""
+            }
+        """
         expect = "Illegal Array Literal: [[IntLit(1),IntLit(2)],[IntLit(1),FloatLit(2.5)]]"
         self.assertTrue(TestChecker.test(input, expect, 487))
 
@@ -1429,7 +1496,8 @@ class CheckerSuite(unittest.TestCase):
                 main(){
                     Val a: Array[Array[Int, 2], 2] = Array(Array(1, 2), Array(1.5, 2.5));
                 }
-            }"""
+            }
+        """
         expect = "Illegal Array Literal: [[IntLit(1),IntLit(2)],[FloatLit(1.5),FloatLit(2.5)]]"
         self.assertTrue(TestChecker.test(input, expect, 488))
 
@@ -1444,7 +1512,8 @@ class CheckerSuite(unittest.TestCase):
                 main(){
                     Var x: Int = A.a;
                 }
-            }"""
+            }
+        """
         expect = "Illegal Member Access: FieldAccess(Id(A),Id(a))"
         self.assertTrue(TestChecker.test(input, expect, 489))
 
@@ -1465,7 +1534,8 @@ class CheckerSuite(unittest.TestCase):
                     Var x: A;
                     Var y: Int = A.foo1();
                 }
-            }"""
+            }
+        """
         expect = "Illegal Member Access: CallExpr(Id(A),Id(foo1),[])"
         self.assertTrue(TestChecker.test(input, expect, 490))  
 
@@ -1473,7 +1543,8 @@ class CheckerSuite(unittest.TestCase):
     def test_no_entry_1(self):
         input = """
             Class A{} 
-            Class B{}"""
+            Class B{}
+        """
         expect = "No Entry Point"
         self.assertTrue(TestChecker.test(input, expect, 491))
 
@@ -1481,7 +1552,8 @@ class CheckerSuite(unittest.TestCase):
         input = """
             Class A{} 
             Class B{}
-            Class Program{}"""
+            Class Program{}
+        """
         expect = "No Entry Point"
         self.assertTrue(TestChecker.test(input, expect, 492))
 
@@ -1491,7 +1563,8 @@ class CheckerSuite(unittest.TestCase):
             Class B{}
             Class Program{
                 _main(){}
-            }"""
+            }
+        """
         expect = "No Entry Point"
         self.assertTrue(TestChecker.test(input, expect, 493))
 
@@ -1514,7 +1587,8 @@ class CheckerSuite(unittest.TestCase):
                 main(){
                     Var a: Int = Shape::$numOfShape + Shape::$getNumOfShape();
                 }
-            }"""
+            }
+        """
         expect = "Undeclared Attribute: length"
         self.assertTrue(TestChecker.test(input, expect, 494))
 
@@ -1543,7 +1617,8 @@ class CheckerSuite(unittest.TestCase):
                     s = r * r * Self.myPI;
                     a[1] = s;
                 }
-            }"""
+            }
+        """
         expect = "Type Mismatch In Statement: AssignStmt(ArrayCell(Id(a),[IntLit(1)]),Id(s))"
         self.assertTrue(TestChecker.test(input, expect, 495))
 
@@ -1576,7 +1651,8 @@ class CheckerSuite(unittest.TestCase):
                         a = a * 3 - 9; 
                     }
                 }
-            }"""
+            }
+        """
         expect = "No Entry Point"
         self.assertTrue(TestChecker.test(input, expect, 496))
 
@@ -1615,7 +1691,8 @@ class CheckerSuite(unittest.TestCase):
                         }
                     }
                 }
-            }"""
+            }
+        """
         expect = "No Entry Point"
         self.assertTrue(TestChecker.test(input, expect, 497))
 
@@ -1636,7 +1713,8 @@ class CheckerSuite(unittest.TestCase):
                     System.out.println(s +. " says hello to the world!");
                     Return;
                 }
-            }"""
+            }
+        """
         expect = "Undeclared Identifier: System"
         self.assertTrue(TestChecker.test(input, expect, 498))
 
@@ -1665,6 +1743,7 @@ class CheckerSuite(unittest.TestCase):
                 main(){
                     D.daily(1);
                 }
-            }"""
+            }
+        """
         expect = "Illegal Member Access: Call(Id(D),Id(daily),[IntLit(1)])"
         self.assertTrue(TestChecker.test(input, expect, 499))

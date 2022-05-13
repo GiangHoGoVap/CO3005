@@ -127,32 +127,24 @@ class StaticChecker(BaseVisitor):
             
             if type(var_type) is ClassType:
                 if type(value[2]) is ClassType:
-                    # print("var_type.classname.name: " + var_type.classname.name)
-                    # print("value[2].classname.name: " + value[2].classname.name)
                     if var_type.classname.name != value[2].classname.name:
                         raise TypeMismatchInStatement(ast)
                 elif type(value[2]) not in [NullLiteral, NewExpr]:
                     raise TypeMismatchInStatement(ast)
 
             # If we have an array declaration -> Var a: Array[Int, 3] = Array(1, 2, 3);
-            # print("value[2]: " + str(value[2]) + "\n")
-            # print("var_type: " + str(type(var_type)) + "\n")
             elif type(var_type) is ArrayType and type(value[2]) is ArrayType: # Array[Array[Int, 2], 2] = Array(Array(1, 2), Array(3, 4))
                 if var_type.size != value[2].size: 
                     raise TypeMismatchInStatement(ast)
                 var_ele_type = var_type.eleType # Array[Int, 2]
                 value_ele_type = value[2].eleType # ArrayType(1, 2)
 
-                # print("var_ele_type: " + str(type(var_type.eleType)) + "\n")
-                # print("value_ele_type: " + str(type(value[2].eleType)) + "\n")
                 if not(type(var_ele_type) is type(value_ele_type)):
                     # Check array element type coercion --> Case: Float / Int
                     if not(type(var_ele_type) is FloatType and type(value_ele_type) is IntType):
                         raise TypeMismatchInStatement(ast)
             
             # Else: Check if value is a primitive type
-            # print("value[2]: " + str(type(value[2])) + "\n") # --> NullLiteral
-            # print("var_type: " + str(type(var_type)) + "\n") # --> ClassType
             elif not(type(value[2]) is type(var_type)):
                 if not(type(var_type) is FloatType and type(value[2]) is IntType):
                     raise TypeMismatchInStatement(ast)
@@ -207,8 +199,6 @@ class StaticChecker(BaseVisitor):
                         raise TypeMismatchInConstant(ast)
 
             # Else: other primitive type declaration
-            # print("value[2]: " + str(type(value[2])) + "\n")
-            # print("const_type: " + str(type(const_type)) + "\n")
             elif not(type(value[2]) is type(const_type)):
                 # Check primitive type coercion
                 if not(type(const_type) is FloatType and type(value[2]) is IntType):
@@ -289,7 +279,6 @@ class StaticChecker(BaseVisitor):
                 else:
                     self.visit(x, (symbol_stack, inLoop, inner_env, outer_env, False))
         # Finish checking the block
-        # print("self.scope: " + str(self.scope))
         symbol_stack = symbol_stack[:scope_stack[-1]]
         scope_stack.pop()
 
@@ -346,21 +335,15 @@ class StaticChecker(BaseVisitor):
             if lhs_type.classname.name != expr_type.classname.name:
                 raise TypeMismatchInStatement(ast)
 
-        # print("lhs_type: " + str(type(lhs_type)) + "\n")
-        # print("expr_type: " + str(type(expr_type)) + "\n")
         if not(type(lhs_type) is type(expr_type)):
             # Check primitive type coercion
             if type(lhs_type) is ArrayType:
                 lhs_eleType = lhs_type.eleType
                 if not(type(lhs_eleType) is type(expr_type)):
-                    # print("lhs_eleType: " + str(type(lhs_eleType)))
-                    # print("expr_type: " + str(type(expr_type)))
                     if not(type(lhs_eleType) is FloatType and type(expr_type) is IntType):
                         raise TypeMismatchInStatement(ast)
             
             elif not(type(lhs_type) is FloatType and type(expr_type) is IntType):
-                # print("lhs_type2: " + str(type(lhs_type)))
-                # print("expr_type2: " + str(expr_type))
                 raise TypeMismatchInStatement(ast)
             
     def visitIf(self, ast: If, c):
@@ -434,8 +417,6 @@ class StaticChecker(BaseVisitor):
         (symbol_stack, inLoop, inner_env, outer_env, const_decl_flag) = c
         current_class = list(outer_env)[-1]
         current_method = list(outer_env[current_class])[-1]
-        # print("current_class: " + current_class)
-        # print("current_method: " + current_method)
         if current_method == "Constructor_method":
             if ast.expr is not None:
                 raise TypeMismatchInStatement(ast)
@@ -538,8 +519,6 @@ class StaticChecker(BaseVisitor):
                 raise TypeMismatchInExpression(ast)
             elif type(lhs[2]) is FloatType or type(rhs[2]) is FloatType:
                 return (None, None, FloatType())
-            # print("lhs[2]: " + str(lhs[2]) + "\n")
-            # print("rhs[2]: " + str(rhs[2]) + "\n")
             return (None, None, IntType())
         elif op in ["%"]:
             if not(type(lhs[2]) is IntType) or not(type(rhs[2]) is IntType):
@@ -567,8 +546,6 @@ class StaticChecker(BaseVisitor):
         elif op in ["<", ">", "<=", ">="]:
             if ExpUtils.isNotIntFloatType(lhs[2]) or ExpUtils.isNotIntFloatType(rhs[2]):
                 raise TypeMismatchInExpression(ast)
-            # elif type(lhs[2]) is FloatType or type(rhs[2]) is FloatType:
-            #     return (None, None, FloatType())
             return (None, None, BoolType())
 
     def visitUnaryOp(self, ast: UnaryOp, c):
@@ -636,7 +613,6 @@ class StaticChecker(BaseVisitor):
                 if not(type(param_type) is FloatType and type(arg_type) is IntType):
                     raise TypeMismatchInExpression(ast)
         
-        # print("method[2]: " + str(method[2]) + "\n")
         return (None, None, method[2])
 
     def getInfoAccess(self, ast, c):
@@ -701,7 +677,6 @@ class StaticChecker(BaseVisitor):
         """
         (symbol_stack, inner_env, outer_env, const_decl_flag) = c
         arrType = self.visit(ast.arr, (symbol_stack, inner_env, outer_env, const_decl_flag))
-        # print("arrType: ", str(arrType[2]))
         count = len(ast.idx) - 1
         clone = arrType[2]
         clone = clone.eleType
@@ -757,9 +732,6 @@ class StaticChecker(BaseVisitor):
             if field_name[1] == "method":
                 raise TypeMismatchInExpression(ast)
         
-        # print("field_name[0]: " + field_name[0])
-        # print("field_name[1]: " + field_name[1])
-        # print("field_name[2]: " + str(field_name[2]))
         return field_name
 
     def visitIntLiteral(self, ast:IntLiteral, c):
@@ -783,20 +755,13 @@ class StaticChecker(BaseVisitor):
     def visitArrayLiteral(self, ast, c):
         # value: List[Expr] 
         (symbol_stack, inner_env, outer_env, const_decl_flag) = c
-        # Array(Array(1, 2), Array(3, 4.5))
-        # --> [(None, None, IntType()), (None, None, IntType()), (None, None, IntType()), (None, None, IntType()), 
-        #      (None, None, ArrayType(2, IntType())), (None, None, ArrayType(2, IntType()))]
         valueLst = list(map(lambda x: self.visit(x, (symbol_stack, inner_env, outer_env, const_decl_flag)), ast.value))
-        # for i in valueLst:
-        #     print("i in valueLst: ", i)
-        # print("valueLst[0][2]: ", str(valueLst[0][2]))
         if type(valueLst[0][2]) is ArrayType:
             typeLst = []
             for i in valueLst:
                 typeLst.append(i[2]) # [ArrayType(2, IntType()), ArrayType(2, IntType())]
             first_ele = typeLst[0]
             for i in typeLst:
-                # print("i: ", i)
                 if i.size != first_ele.size:
                     raise TypeMismatchInStatement(ast)
                 if not(type(i.eleType) is type(first_ele.eleType)) or self.illegal_array_lit:
@@ -807,7 +772,6 @@ class StaticChecker(BaseVisitor):
         for ele_type in valueLst:
             if not(type(ele_type[2]) is type(first_ele_type)):
                 self.illegal_array_lit = True
-                # raise IllegalArrayLiteral(ast)
         return (None, None, ArrayType(len(valueLst), first_ele_type))
 
     def visitIntType(self, ast, c):
