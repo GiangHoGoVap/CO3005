@@ -181,7 +181,7 @@ class TestCodeGen():
         try:
             codeGen.gen(asttree, path)
             
-            subprocess.call("java  -jar "+ JASMIN_JAR + " " + path + "/D96Class.j",shell=True,stderr=subprocess.STDOUT)
+            subprocess.call("java  -jar "+ JASMIN_JAR + " " + path + "/*.j",shell=True,stderr=subprocess.STDOUT)
             
             subprocess.run("java -cp ./lib:. D96Class",shell=True, stdout = f, timeout=10)
         except StaticError as e:
