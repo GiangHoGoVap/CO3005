@@ -12,6 +12,17 @@ from Emitter import Emitter
 from Frame import Frame
 from abc import ABC, abstractmethod
 
+class MType:
+    def __init__(self,partype,rettype):
+        self.partype = partype
+        self.rettype = rettype
+
+class Symbol:
+    def __init__(self,name,mtype,value = None):
+        self.name = name
+        self.mtype = mtype
+        self.value = value
+
 class CodeGenerator(Utils):
     def __init__(self):
         self.libName = "io"
